@@ -1,33 +1,31 @@
-from unicodedata import name
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from super_types.models import SuperType
 from .serializers import SuperSerializer
 from .models import Super
 
 @api_view(['GET', 'POST'])
 def supers_list(request):
     if request.method == 'GET':
-        supers_type_param = request.query_params.get('type')
         supers = Super.objects.all()
-        custom_response_dictionary = {}
+        supers_type_param = request.query_params.get('type')
         if supers_type_param:
-            supers = supers.filter(super_type__type=supers_type_param)
-            serializer = SuperSerializer(supers, many=True)
+            supers = supers.filter(super_type__type=supers_type_param)  
+            serializer = SuperSerializer(supers, many=True) 
             return Response(serializer.data)
         heroes_list = []
         villains_list = []
+        for super in supers:
+            serializer = SuperSerializer(super)
+            if super.super_type.id == 1:                
+                heroes_list.append(serializer.data)
+            elif super.super_type.id == 2:
+                villains_list.append(serializer.data)
         custom_response_dictionary = {
             "Heroes": heroes_list,
             "Villains": villains_list
         }
-        for super in supers:             #I need a serializer in here somewhere
-            if SuperType.type == "Hero":
-                heroes_list.append(super)
-            elif SuperType.type == "Villain":
-                villains_list.append(super)
         return Response(custom_response_dictionary)
     elif request.method == 'POST':
         serializer = SuperSerializer(data=request.data)
